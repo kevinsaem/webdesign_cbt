@@ -1,5 +1,7 @@
-// 웹디자인개발기능사 문제풀이 사이트 - 메인 로직
-// 의존: questions.js (QUESTIONS, CONCEPTS_INDEX), concepts.js (CONCEPTS)
+// 웹디자인개발기능사 문제풀이 사이트 - 황근호 전용 학습 시스템
+// 의존: questions.js (BASE_QUESTIONS, QUESTIONS, CONCEPTS_INDEX), concepts.js (CONCEPTS)
+
+const STUDENT_NAME = "황근호";
 
 // ---------- 유틸 ----------
 const $ = (sel) => document.querySelector(sel);
@@ -30,32 +32,49 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
+function fmtDate(t) {
+  const d = new Date(t);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtDuration(sec) {
+  const m = Math.floor(sec / 60), s = sec % 60;
+  return m > 0 ? `${m}분 ${s}초` : `${s}초`;
 }
 
-// ---------- 로컬 스토리지(오답노트) ----------
-const STORE_KEY = "wdc-wrong-v1";
-function loadWrongIds() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY) || "[]"); }
+// ---------- 로컬 스토리지 ----------
+const STORE_WRONG = "wdc-wrong-v1";
+const STORE_ATTEMPTS = "wdc-attempts-v1";
+
+function loadWrongBaseIds() {
+  try { return JSON.parse(localStorage.getItem(STORE_WRONG) || "[]"); }
   catch { return []; }
 }
-function saveWrongIds(ids) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(Array.from(new Set(ids))));
+function saveWrongBaseIds(ids) {
+  localStorage.setItem(STORE_WRONG, JSON.stringify(Array.from(new Set(ids))));
 }
-function addWrong(id) {
-  const s = new Set(loadWrongIds()); s.add(id); saveWrongIds(Array.from(s));
+function addWrong(baseId) {
+  const s = new Set(loadWrongBaseIds()); s.add(baseId); saveWrongBaseIds(Array.from(s));
 }
-function removeWrong(id) {
-  const s = new Set(loadWrongIds()); s.delete(id); saveWrongIds(Array.from(s));
+function removeWrong(baseId) {
+  const s = new Set(loadWrongBaseIds()); s.delete(baseId); saveWrongBaseIds(Array.from(s));
 }
-function clearWrong() { localStorage.removeItem(STORE_KEY); }
+function clearWrong() { localStorage.removeItem(STORE_WRONG); }
+
+function loadAttempts() {
+  try { return JSON.parse(localStorage.getItem(STORE_ATTEMPTS) || "[]"); }
+  catch { return []; }
+}
+function saveAttempt(attempt) {
+  const arr = loadAttempts();
+  arr.push(attempt);
+  localStorage.setItem(STORE_ATTEMPTS, JSON.stringify(arr));
+}
+function clearAttempts() { localStorage.removeItem(STORE_ATTEMPTS); }
 
 // ---------- 카테고리 ----------
 function allCategories() {
-  return Array.from(new Set(QUESTIONS.map(q => q.category)));
+  return Array.from(new Set(BASE_QUESTIONS.map(q => q.category)));
 }
 function questionsByCategory(cat) {
   return QUESTIONS.filter(q => q.category === cat);
@@ -63,18 +82,18 @@ function questionsByCategory(cat) {
 
 // ---------- 상태 ----------
 const state = {
-  mode: null,         // 'practice' | 'exam' | 'category' | 'wrong' | null
-  pool: [],           // 현재 풀이 중인 문제 배열
+  mode: null,
+  pool: [],
   idx: 0,
-  selected: null,     // 선택한 보기 인덱스
-  checked: false,     // 채점 완료 여부 (연습 모드)
-  answers: [],        // 시험모드: {qid, selected, correct}
-  meta: { title: "", target: 0 } // 화면 표기용
+  selected: null,
+  checked: false,
+  answers: [],
+  startedAt: 0,
+  meta: { title: "", target: 0 }
 };
 
-// ---------- 라우팅(간단) ----------
+// ---------- 라우팅 ----------
 function navigate(view) {
-  // view: 'home' | 'quiz' | 'result' | 'concepts'
   $$(".view").forEach(v => v.classList.add("hidden"));
   $(`#view-${view}`).classList.remove("hidden");
   window.scrollTo(0, 0);
@@ -83,7 +102,8 @@ function navigate(view) {
 // ---------- 홈 렌더링 ----------
 function renderHome() {
   const cats = allCategories();
-  const wrongCount = loadWrongIds().length;
+  const wrongCount = loadWrongBaseIds().length;
+  const attempts = loadAttempts();
   $("#cat-chips").innerHTML = "";
   cats.forEach(c => {
     const count = questionsByCategory(c).length;
@@ -94,48 +114,217 @@ function renderHome() {
     $("#cat-chips").appendChild(chip);
   });
   $("#wrong-count").textContent = wrongCount;
-  $("#total-count").textContent = QUESTIONS.length;
+  $("#total-count").textContent = QUESTIONS.length.toLocaleString();
   $("#concept-count").textContent = Object.keys(CONCEPTS).length;
+  $("#student-name").textContent = STUDENT_NAME;
+  $$(".student-name-inline").forEach(n => n.textContent = STUDENT_NAME);
   $("#btn-wrong").disabled = wrongCount === 0;
   $("#btn-wrong").style.opacity = wrongCount === 0 ? 0.5 : 1;
   $("#btn-clear-wrong").classList.toggle("hidden", wrongCount === 0);
+  renderStats(attempts);
+}
+
+// ---------- 통계 (시험 점수 추이) ----------
+function renderStats(attempts) {
+  const wrap = $("#stats-area");
+  wrap.innerHTML = "";
+  const examAttempts = attempts.filter(a => a.mode === "exam");
+
+  if (examAttempts.length === 0) {
+    wrap.appendChild(el("div", { class: "empty" },
+      `${STUDENT_NAME} 학생, 시험 모드를 한 번도 보지 않았어요. 첫 시험을 봐서 점수 그래프를 시작해보세요!`));
+    return;
+  }
+
+  // 요약 카드
+  const last = examAttempts[examAttempts.length - 1];
+  const best = examAttempts.reduce((a, b) => b.percent > a.percent ? b : a, examAttempts[0]);
+  const avg = Math.round(examAttempts.reduce((s, a) => s + a.percent, 0) / examAttempts.length);
+  const prev = examAttempts.length > 1 ? examAttempts[examAttempts.length - 2] : null;
+  const delta = prev ? last.percent - prev.percent : 0;
+
+  const grid = el("div", { class: "score-summary" });
+  grid.appendChild(scoreBox(examAttempts.length, "응시 횟수"));
+  grid.appendChild(scoreBox(`${last.percent}%`, "최근 점수"));
+  grid.appendChild(scoreBox(`${best.percent}%`, "최고 점수"));
+  grid.appendChild(scoreBox(`${avg}%`, "평균"));
+  wrap.appendChild(grid);
+
+  if (prev) {
+    const arrow = delta > 0 ? "▲" : delta < 0 ? "▼" : "─";
+    const cls = delta > 0 ? "delta up" : delta < 0 ? "delta down" : "delta";
+    const txt = delta === 0 ? "지난 시험과 동일" : `지난 시험 대비 ${arrow} ${Math.abs(delta)}점`;
+    wrap.appendChild(el("div", { class: cls, style: "text-align:center; margin:8px 0;" }, txt));
+  }
+
+  // 라인 차트 (SVG)
+  wrap.appendChild(renderSparkline(examAttempts));
+
+  // 최근 시험 5개 목록
+  wrap.appendChild(el("div", { class: "section-title", style: "margin-top:14px" }, "최근 응시 기록"));
+  const list = el("div", { class: "attempt-list" });
+  examAttempts.slice(-10).reverse().forEach((a) => {
+    const item = el("div", { class: "attempt-item " + (a.percent >= 60 ? "pass" : "fail") });
+    item.appendChild(el("div", { class: "main" },
+      el("strong", {}, `${a.percent}점`),
+      el("span", { class: "sub" },
+        ` · ${a.correct}/${a.total}문항 · ${fmtDuration(a.durationSec || 0)}`)
+    ));
+    item.appendChild(el("div", { class: "sub" }, fmtDate(a.at)));
+    list.appendChild(item);
+  });
+  wrap.appendChild(list);
+
+  // 초기화 버튼
+  const reset = el("button", {
+    class: "chip danger",
+    style: "margin-top:10px",
+    onclick: () => {
+      if (confirm(`${STUDENT_NAME} 학생의 시험 기록을 모두 초기화할까요?`)) {
+        clearAttempts(); renderHome();
+      }
+    }
+  }, "시험 기록 초기화");
+  wrap.appendChild(reset);
+}
+
+function renderSparkline(attempts) {
+  const W = 320, H = 110, PAD = 24;
+  const scores = attempts.slice(-20).map(a => a.percent);
+  const n = scores.length;
+  const maxY = 100, minY = 0;
+
+  const xStep = n > 1 ? (W - PAD * 2) / (n - 1) : 0;
+  const points = scores.map((v, i) => {
+    const x = PAD + i * xStep;
+    const y = PAD + (1 - (v - minY) / (maxY - minY)) * (H - PAD * 2);
+    return [x, y];
+  });
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("class", "sparkline");
+
+  // 합격선 60%
+  const passY = PAD + (1 - 0.6) * (H - PAD * 2);
+  const passLine = document.createElementNS(svgNS, "line");
+  passLine.setAttribute("x1", PAD); passLine.setAttribute("x2", W - PAD);
+  passLine.setAttribute("y1", passY); passLine.setAttribute("y2", passY);
+  passLine.setAttribute("stroke", "#16a34a");
+  passLine.setAttribute("stroke-dasharray", "3 3");
+  passLine.setAttribute("stroke-width", "1");
+  svg.appendChild(passLine);
+
+  const passLabel = document.createElementNS(svgNS, "text");
+  passLabel.setAttribute("x", W - PAD);
+  passLabel.setAttribute("y", passY - 4);
+  passLabel.setAttribute("text-anchor", "end");
+  passLabel.setAttribute("font-size", "10");
+  passLabel.setAttribute("fill", "#16a34a");
+  passLabel.textContent = "합격선 60%";
+  svg.appendChild(passLabel);
+
+  // 점수 라인
+  if (n > 1) {
+    const path = document.createElementNS(svgNS, "polyline");
+    path.setAttribute("points", points.map(p => p.join(",")).join(" "));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "#3b66ff");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+  }
+
+  // 각 점
+  points.forEach(([x, y], i) => {
+    const c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", "3.5");
+    c.setAttribute("fill", scores[i] >= 60 ? "#16a34a" : "#dc2626");
+    svg.appendChild(c);
+
+    if (i === points.length - 1) {
+      const lbl = document.createElementNS(svgNS, "text");
+      lbl.setAttribute("x", x);
+      lbl.setAttribute("y", y - 8);
+      lbl.setAttribute("text-anchor", "middle");
+      lbl.setAttribute("font-size", "11");
+      lbl.setAttribute("font-weight", "700");
+      lbl.setAttribute("fill", "#1f2430");
+      lbl.textContent = scores[i];
+      svg.appendChild(lbl);
+    }
+  });
+
+  const wrap = el("div", { class: "sparkline-wrap" });
+  wrap.appendChild(el("div", { class: "sparkline-title" },
+    `시험 점수 추이 (최근 ${n}회)`));
+  wrap.appendChild(svg);
+  return wrap;
 }
 
 // ---------- 모드 시작 ----------
 function startPractice() {
   state.mode = "practice";
-  state.pool = shuffle(QUESTIONS);
+  state.pool = shuffle(QUESTIONS).slice(0, 100); // 연습은 100문항 무작위
   state.idx = 0; state.selected = null; state.checked = false;
+  state.startedAt = Date.now();
   state.meta = { title: "연습 모드", target: state.pool.length };
   navigate("quiz");
   renderQuestion();
 }
 function startExam() {
   state.mode = "exam";
-  // 60문항 시험: 문제은행이 60개 미만이면 중복 없이 가능한 만큼만
-  const total = Math.min(60, QUESTIONS.length);
-  state.pool = shuffle(QUESTIONS).slice(0, total);
+  // 실제 시험과 동일하게 60문항. BASE 기준으로 중복 개념 방지.
+  const target = Math.min(60, BASE_QUESTIONS.length);
+  const usedBaseIds = new Set();
+  const pool = [];
+  const shuffled = shuffle(QUESTIONS);
+  for (const q of shuffled) {
+    if (usedBaseIds.has(q.baseId)) continue;
+    usedBaseIds.add(q.baseId);
+    pool.push(q);
+    if (pool.length >= target) break;
+  }
+  state.pool = pool;
   state.idx = 0; state.selected = null; state.checked = false; state.answers = [];
-  state.meta = { title: `시험 모드 (${total}문항)`, target: total };
+  state.startedAt = Date.now();
+  state.meta = { title: `시험 모드 (${target}문항)`, target };
   navigate("quiz");
   renderQuestion();
 }
 function startCategory(cat) {
   state.mode = "category";
-  state.pool = shuffle(questionsByCategory(cat));
+  // 카테고리 학습은 BASE 기준 중복 제거 후 30문항
+  const usedBaseIds = new Set();
+  const pool = [];
+  for (const q of shuffle(questionsByCategory(cat))) {
+    if (usedBaseIds.has(q.baseId)) continue;
+    usedBaseIds.add(q.baseId);
+    pool.push(q);
+    if (pool.length >= 30) break;
+  }
+  state.pool = pool;
   state.idx = 0; state.selected = null; state.checked = false;
+  state.startedAt = Date.now();
   state.meta = { title: `${cat} 학습`, target: state.pool.length };
   navigate("quiz");
   renderQuestion();
 }
 function startWrong() {
-  const ids = loadWrongIds();
-  if (ids.length === 0) return;
-  const pool = QUESTIONS.filter(q => ids.includes(q.id));
+  const baseIds = loadWrongBaseIds();
+  if (baseIds.length === 0) return;
+  // 오답으로 표시된 base에서 변형 하나씩 골라 다시 출제
+  const pool = baseIds.map(bid => {
+    const variants = QUESTIONS.filter(q => q.baseId === bid);
+    return variants[Math.floor(Math.random() * variants.length)];
+  }).filter(Boolean);
   if (pool.length === 0) { alert("오답이 없습니다."); return; }
   state.mode = "wrong";
   state.pool = shuffle(pool);
   state.idx = 0; state.selected = null; state.checked = false;
+  state.startedAt = Date.now();
   state.meta = { title: "오답노트 다시풀기", target: state.pool.length };
   navigate("quiz");
   renderQuestion();
@@ -148,7 +337,7 @@ function renderQuestion() {
 
   $("#quiz-title").textContent = state.meta.title;
   $("#progress-text").textContent = `${state.idx + 1} / ${state.pool.length}`;
-  $("#progress-bar").style.width = `${((state.idx) / state.pool.length) * 100}%`;
+  $("#progress-bar").style.width = `${(state.idx / state.pool.length) * 100}%`;
 
   const container = $("#question-area");
   container.innerHTML = "";
@@ -168,44 +357,30 @@ function renderQuestion() {
       "data-i": i,
       onclick: () => onSelect(i)
     },
-      el("span", { class: "idx" }, ["①", "②", "③", "④"][i] || String(i + 1)),
+      el("span", { class: "idx" }, ["①", "②", "③", "④"][i]),
       el("span", { class: "txt" }, text)
     );
     opts.appendChild(opt);
   });
   card.appendChild(opts);
 
-  // 액션 버튼
   const actions = el("div", { class: "actions" });
   if (state.mode === "practice" || state.mode === "category" || state.mode === "wrong") {
-    // 연습/카테고리/오답: 정답 확인 → 다음
-    const checkBtn = el("button", {
-      class: "btn primary",
-      id: "btn-check",
-      onclick: onCheck
-    }, "정답 확인");
-    const nextBtn = el("button", {
-      class: "btn ghost",
-      id: "btn-next",
-      onclick: onNext
-    }, state.idx === state.pool.length - 1 ? "마치기" : "다음 문제");
-    actions.appendChild(checkBtn);
-    actions.appendChild(nextBtn);
+    actions.appendChild(el("button", {
+      class: "btn primary", id: "btn-check", onclick: onCheck
+    }, "정답 확인"));
+    actions.appendChild(el("button", {
+      class: "btn ghost", id: "btn-next", onclick: onNext
+    }, state.idx === state.pool.length - 1 ? "마치기" : "다음 문제"));
   } else if (state.mode === "exam") {
-    // 시험: 다음 / 제출
-    const nextBtn = el("button", {
-      class: "btn primary",
-      id: "btn-next",
-      onclick: onNext
-    }, state.idx === state.pool.length - 1 ? "제출하기" : "다음 문제");
-    actions.appendChild(nextBtn);
+    actions.appendChild(el("button", {
+      class: "btn primary", id: "btn-next", onclick: onNext
+    }, state.idx === state.pool.length - 1 ? "제출하기" : "다음 문제"));
   }
   card.appendChild(actions);
 
   container.appendChild(card);
-
-  state.selected = null;
-  state.checked = false;
+  state.selected = null; state.checked = false;
   syncButtonState();
 }
 
@@ -221,18 +396,15 @@ function syncButtonState() {
   const checkBtn = $("#btn-check");
   const nextBtn = $("#btn-next");
   if (state.mode === "exam") {
-    nextBtn.disabled = state.selected === null;
+    if (nextBtn) nextBtn.disabled = state.selected === null;
     return;
   }
   if (checkBtn) checkBtn.disabled = state.selected === null || state.checked;
   if (nextBtn) {
     nextBtn.disabled = !state.checked;
-    // 채점 전엔 정답 확인이 메인, 채점 후엔 다음이 메인
     if (state.checked) {
-      checkBtn.classList.replace("primary", "ghost") ||
-        (checkBtn.className = "btn ghost");
-      nextBtn.classList.replace("ghost", "primary") ||
-        (nextBtn.className = "btn primary");
+      checkBtn.className = "btn ghost";
+      nextBtn.className = "btn primary";
     } else {
       checkBtn.className = "btn primary";
       nextBtn.className = "btn ghost";
@@ -246,14 +418,9 @@ function onCheck() {
   state.checked = true;
   const correct = state.selected === q.answer;
 
-  // 오답노트 기록/제거
-  if (correct) {
-    removeWrong(q.id);
-  } else {
-    addWrong(q.id);
-  }
+  if (correct) removeWrong(q.baseId);
+  else addWrong(q.baseId);
 
-  // 보기 색칠
   $$("#question-area .opt").forEach(opt => {
     opt.classList.add("disabled");
     const i = Number(opt.dataset.i);
@@ -261,14 +428,12 @@ function onCheck() {
     else if (i === state.selected) opt.classList.add("wrong");
   });
 
-  // 해설
   const fb = el("div", { class: "feedback " + (correct ? "correct" : "wrong") });
   fb.appendChild(el("div", { class: "head" },
-    correct ? "✅ 정답입니다!" : "❌ 오답입니다."
+    correct ? `✅ 정답입니다! ${STUDENT_NAME} 학생, 잘했어요!` : `❌ 오답입니다. ${STUDENT_NAME} 학생, 한 번 더 확인해요`
   ));
-  fb.appendChild(el("div", { html: escapeHtml(q.explain) }));
+  fb.appendChild(el("div", {}, q.explain));
 
-  // 쉬운 설명 토글
   const cInfo = CONCEPTS[q.conceptId];
   if (cInfo) {
     const toggle = el("button", { class: "easy-toggle", type: "button" },
@@ -310,11 +475,12 @@ function onNext() {
     const q = state.pool[state.idx];
     state.answers.push({
       qid: q.id,
+      baseId: q.baseId,
       selected: state.selected,
       correct: state.selected === q.answer
     });
-    if (state.selected === q.answer) removeWrong(q.id);
-    else addWrong(q.id);
+    if (state.selected === q.answer) removeWrong(q.baseId);
+    else addWrong(q.baseId);
   } else {
     if (!state.checked) return;
   }
@@ -326,38 +492,61 @@ function onNext() {
 
 // ---------- 결과 ----------
 function finishQuiz() {
-  // 시험 모드는 결과 화면, 그 외는 간단 종료 화면
   navigate("result");
   $("#progress-bar").style.width = "100%";
 
   const isExam = state.mode === "exam";
-  const correctCount = isExam
-    ? state.answers.filter(a => a.correct).length
-    : null;
+  const durationSec = Math.round((Date.now() - state.startedAt) / 1000);
 
   $("#result-area").innerHTML = "";
 
   if (isExam) {
     const total = state.pool.length;
-    // 실제 시험: 60문항 중 36문항 이상(60%) 합격
+    const correctCount = state.answers.filter(a => a.correct).length;
     const passLine = Math.ceil(total * 0.6);
     const pass = correctCount >= passLine;
+    const percent = Math.round(correctCount / total * 100);
+
+    // 시험 기록 저장
+    saveAttempt({
+      at: Date.now(), mode: "exam",
+      total, correct: correctCount, percent,
+      durationSec
+    });
+
+    const attempts = loadAttempts().filter(a => a.mode === "exam");
+    const prev = attempts.length > 1 ? attempts[attempts.length - 2] : null;
+    const delta = prev ? percent - prev.percent : null;
 
     const hero = el("div", { class: "card score-hero" });
-    hero.appendChild(el("div", { class: "stat" }, "시험 모드 결과"));
+    hero.appendChild(el("div", { class: "stat" }, `${STUDENT_NAME} 학생의 시험 결과`));
     hero.appendChild(el("div", { class: "grade " + (pass ? "pass" : "fail") },
       pass ? "🎉 합격" : "📚 더 연습"));
     hero.appendChild(el("div", { class: "stat" },
-      `${total}문항 중 ${correctCount}문항 정답 (합격선: ${passLine}문항)`));
+      `${total}문항 중 ${correctCount}문항 정답 · ${percent}점 (합격선 ${passLine}문항)`));
+    if (delta !== null) {
+      const arrow = delta > 0 ? "▲" : delta < 0 ? "▼" : "─";
+      hero.appendChild(el("div", {
+        class: "stat",
+        style: "margin-top:6px;color:" + (delta > 0 ? "#16a34a" : delta < 0 ? "#dc2626" : "#6b7384")
+      }, `지난 시험 대비 ${arrow} ${Math.abs(delta)}점 · 응시 ${attempts.length}회차`));
+    }
     $("#result-area").appendChild(hero);
 
     const sum = el("div", { class: "card" });
     const grid = el("div", { class: "score-summary" });
     grid.appendChild(scoreBox(correctCount, "정답"));
     grid.appendChild(scoreBox(total - correctCount, "오답"));
-    grid.appendChild(scoreBox(`${Math.round(correctCount / total * 100)}%`, "정답률"));
+    grid.appendChild(scoreBox(`${percent}%`, "정답률"));
+    grid.appendChild(scoreBox(fmtDuration(durationSec), "소요"));
     sum.appendChild(grid);
     $("#result-area").appendChild(sum);
+
+    // 응원 메시지
+    const cheer = pass
+      ? `근호야 ✊ 이대로만 가면 본 시험에서도 충분히 합격이야!`
+      : `근호야 💪 오답노트로 한 번 더 다지면 다음엔 합격선을 넘을 수 있어!`;
+    $("#result-area").appendChild(el("div", { class: "card cheer" }, cheer));
 
     $("#result-area").appendChild(el("div", { class: "section-title" }, "문항별 결과"));
     const list = el("div", { class: "review-list" });
@@ -374,26 +563,22 @@ function finishQuiz() {
     });
     $("#result-area").appendChild(list);
   } else {
-    // 연습/카테고리/오답 모드는 간단한 완료 화면
     const hero = el("div", { class: "card score-hero" });
-    hero.appendChild(el("div", { class: "grade" }, "🙌 수고하셨어요"));
+    hero.appendChild(el("div", { class: "grade" }, "🙌 수고했어요"));
     hero.appendChild(el("div", { class: "stat" },
-      `${state.meta.title} · ${state.pool.length}문항을 모두 풀었습니다`));
+      `${STUDENT_NAME} 학생, ${state.meta.title} ${state.pool.length}문항을 모두 풀었어요`));
     $("#result-area").appendChild(hero);
-
-    const tip = el("div", { class: "card" }, "오답으로 표시된 문제는 홈의 '오답노트'에서 다시 풀 수 있습니다.");
-    $("#result-area").appendChild(tip);
+    $("#result-area").appendChild(el("div", { class: "card" },
+      "오답으로 표시된 문제는 홈의 '오답노트'에서 다시 풀 수 있어요."));
   }
 
   const acts = el("div", { class: "actions" });
   acts.appendChild(el("button", {
-    class: "btn primary",
-    onclick: goHome
+    class: "btn primary", onclick: goHome
   }, "홈으로"));
   if (isExam) {
     acts.appendChild(el("button", {
-      class: "btn ghost",
-      onclick: startExam
+      class: "btn ghost", onclick: startExam
     }, "다시 시험"));
   }
   $("#result-area").appendChild(acts);
@@ -411,7 +596,7 @@ function renderConcepts() {
   const list = $("#concept-list");
   list.innerHTML = "";
   Object.entries(CONCEPTS).forEach(([id, c]) => {
-    const cat = (QUESTIONS.find(q => q.conceptId === id) || {}).category || "";
+    const cat = (BASE_QUESTIONS.find(q => q.conceptId === id) || {}).category || "";
     const item = el("div", { class: "concept-item", "data-id": id });
     const head = el("div", { class: "concept-head" },
       el("div", {},
@@ -446,7 +631,6 @@ function goHome() {
 }
 
 function init() {
-  // 모드 카드
   $("#mode-practice").addEventListener("click", startPractice);
   $("#mode-exam").addEventListener("click", startExam);
   $("#btn-wrong").addEventListener("click", startWrong);
@@ -460,16 +644,14 @@ function init() {
   $("#btn-home-3").addEventListener("click", goHome);
 
   $("#btn-clear-wrong").addEventListener("click", () => {
-    if (confirm("오답노트를 모두 비울까요?")) {
-      clearWrong();
-      renderHome();
+    if (confirm(`${STUDENT_NAME} 학생의 오답노트를 모두 비울까요?`)) {
+      clearWrong(); renderHome();
     }
   });
 
   $("#btn-quit").addEventListener("click", () => {
-    if (state.mode === "exam") {
-      if (!confirm("시험을 중단하고 홈으로 갈까요? 진행 중인 답은 저장되지 않습니다.")) return;
-    }
+    if (state.mode === "exam" &&
+        !confirm("시험을 중단하고 홈으로 갈까요? 진행 중인 답은 저장되지 않습니다.")) return;
     goHome();
   });
 

@@ -227,5 +227,242 @@ const CONCEPTS = {
       "ISO·IEEE: 더 넓은 표준 기구"
     ],
     trap: "ICANN과 W3C 헷갈리기 쉬워요. 도메인은 ICANN, 웹표준은 W3C."
+  },
+
+  // ===== 추가 개념(1000문제 확장) =====
+  "warm-cool": {
+    title: "난색과 한색",
+    oneline: "따뜻한 느낌의 색은 '난색', 시원한 느낌의 색은 '한색'.",
+    easy: "불은 빨강·주황·노랑이라 따뜻해 보여요(난색). 바다·하늘은 파랑·청록이라 시원해 보여요(한색). 색 자체가 온도를 가진 건 아니지만, 우리 머리는 그렇게 느껴요.",
+    keys: ["난색: 빨강·주황·노랑 계열", "한색: 파랑·청록·남색 계열", "중성색: 초록·보라"],
+    trap: "초록은 한색이 아니라 '중성색'에 더 가깝게 분류돼요."
+  },
+  "achromatic": {
+    title: "무채색과 유채색",
+    oneline: "색기가 있는 색이 유채색, 흰·검·회는 무채색.",
+    easy: "흑백 사진엔 색이 없어요(무채색). 빨강 사진엔 색이 있고요(유채색). 무채색은 '얼마나 밝은가(명도)'만 있고 색상이 없어요.",
+    keys: ["무채색: 흰·검·회 → 명도만 있음", "유채색: 색상·명도·채도 모두 있음"],
+    trap: "남색·갈색은 색상이 있으니 유채색이에요."
+  },
+  "tone": {
+    title: "톤(Tone)",
+    oneline: "명도와 채도를 합쳐서 표현하는 색의 '분위기'.",
+    easy: "같은 빨강이라도 '쨍한 빨강', '어두운 빨강', '뿌연 빨강'은 다른 느낌이죠. 이게 톤이에요. 옷 코디할 때 '톤 맞춘다'고 하는 그 톤.",
+    keys: ["톤 = 명도 + 채도의 조합", "비비드·라이트·다크·딥 등으로 표현"],
+    trap: "톤은 '색상'이 아니에요. 명도+채도 묶음."
+  },
+  "visibility-color": {
+    title: "명시성 vs 주목성",
+    oneline: "명시성은 '잘 보임', 주목성은 '눈에 확 띔'.",
+    easy: "검정 글씨에 노란 바탕은 글씨가 잘 보여요(명시성 ↑, 명도 차이가 큼). 빨간 소화기는 단독으로도 눈에 확 띄어요(주목성 ↑).",
+    keys: ["명시성: 두 색의 명도차가 클수록 ↑", "주목성: 빨강·노랑 등 단색이 눈에 띔"],
+    trap: "둘은 비슷해 보여도 달라요. 명시성은 '두 색 사이', 주목성은 '한 색 자체'."
+  },
+  "image-format": {
+    title: "이미지 포맷(JPG/PNG/GIF)",
+    oneline: "사진은 JPG, 투명 이미지는 PNG, 짧은 움짤은 GIF.",
+    easy: "JPG는 사진 인화처럼 색 정보를 살짝 줄여 작게 만들어요(손실). PNG는 깨끗하고 투명 배경도 돼요. GIF는 256색만 쓸 수 있지만 움직이는 그림을 만들 수 있어요.",
+    keys: ["JPG: 손실 압축, 사진 적합", "PNG: 무손실 + 투명도 지원", "GIF: 256색 + 애니메이션"],
+    trap: "투명 배경이 필요하면 JPG는 안 돼요. PNG/GIF/SVG/WebP를 사용."
+  },
+  "bitmap-vector": {
+    title: "비트맵 vs 벡터",
+    oneline: "비트맵은 점(픽셀)으로, 벡터는 수학 좌표로 그린 그림.",
+    easy: "비트맵은 모자이크 그림이라 크게 확대하면 네모가 보여요(계단현상). 벡터는 컴퓨터가 매번 다시 그려주는 그림이라 아무리 확대해도 매끈해요.",
+    keys: ["비트맵: 픽셀 기반, 확대 시 깨짐 (JPG/PNG/GIF)", "벡터: 좌표·곡선 기반, 무한 확대 (SVG/AI/EPS)"],
+    trap: "로고는 벡터로 만들어야 명함·간판 어디든 확대해서 써요."
+  },
+  "resolution": {
+    title: "해상도(dpi/ppi)",
+    oneline: "1인치 안에 점이 몇 개나 들어가는지 나타내는 수치.",
+    easy: "촘촘하게 점을 찍을수록 그림이 선명해요. 화면용은 72dpi면 충분하고, 종이로 인쇄할 땐 300dpi 이상이 필요해요.",
+    keys: ["dpi/ppi: 1인치당 점 개수", "웹: 72dpi", "인쇄: 300dpi 이상"],
+    trap: "웹 이미지를 300dpi로 키울 필요 없어요. 파일만 무거워져요."
+  },
+  "color-mode": {
+    title: "RGB와 CMYK 색상 모드",
+    oneline: "화면은 RGB(빛), 인쇄는 CMYK(잉크).",
+    easy: "화면은 빛으로 색을 만들어 RGB를, 종이는 잉크로 색을 만들어 CMYK를 써요. 화면에서 예쁘던 색이 인쇄하면 어두워 보이는 이유예요.",
+    keys: ["RGB: Red·Green·Blue (가산)", "CMYK: Cyan·Magenta·Yellow·Key(검정) (감산)"],
+    trap: "인쇄용 파일 만들 땐 CMYK로 작업해야 색 차이가 적어요."
+  },
+  "flex": {
+    title: "Flexbox (1차원 정렬)",
+    oneline: "한 줄(가로 또는 세로)로 요소를 정렬할 때 쓰는 CSS.",
+    easy: "버스 좌석에 사람들을 한 줄로 앉히는 거랑 비슷해요. 가운데 모을지, 양 끝에 붙일지, 사이를 띄울지 골라서 정렬할 수 있어요.",
+    keys: [
+      "display: flex로 시작",
+      "justify-content: 주축 정렬(가로 방향 기본)",
+      "align-items: 교차축 정렬(세로 방향 기본)",
+      "flex-direction으로 방향 변경"
+    ],
+    trap: "Flex는 '한 줄(1차원)' 정렬. 행+열 둘 다 필요하면 Grid."
+  },
+  "grid": {
+    title: "CSS Grid (2차원 레이아웃)",
+    oneline: "행과 열이 동시에 있는 표 같은 레이아웃을 만드는 CSS.",
+    easy: "엑셀처럼 가로줄과 세로줄을 동시에 정해두고 그 칸 안에 요소를 배치해요. 복잡한 화면 레이아웃에 적합.",
+    keys: ["display: grid로 시작", "grid-template-columns/rows로 칸 정의", "Flex(1차원) vs Grid(2차원)"],
+    trap: "한 줄만 배치할 거면 Grid보다 Flex가 더 간단해요."
+  },
+  "media-query": {
+    title: "미디어 쿼리와 뷰포트",
+    oneline: "화면 크기에 따라 다른 스타일을 적용하는 CSS 규칙.",
+    easy: "모바일에선 메뉴를 햄버거(≡)로, PC에선 펼쳐서 보여주고 싶을 때 써요. @media (max-width: 480px) 같이 조건을 걸어요.",
+    keys: [
+      "@media (조건) { CSS 규칙 }",
+      "viewport meta로 모바일 가로폭 설정",
+      "반응형 웹의 핵심 도구"
+    ],
+    trap: "viewport meta 안 적으면 모바일에서 PC 화면 그대로 축소돼 보여요."
+  },
+  "css-units": {
+    title: "CSS 단위 (px / em / rem)",
+    oneline: "px는 고정, em은 부모 글자 기준, rem은 루트 글자 기준.",
+    easy: "px는 자(루), em은 '엄마 글자 크기에 맞춰', rem은 '학교 표준 글자 크기에 맞춰'예요. 접근성·반응형엔 rem이 편해요.",
+    keys: ["px: 절대 단위", "em: 부모 글자 크기 배수", "rem: 루트(html) 글자 크기 배수", "%: 부모 기준 %"],
+    trap: "em은 중첩되면 계산이 복잡해져요. 보통 rem이 더 안전."
+  },
+  "transition": {
+    title: "CSS 전환 효과 (Transition)",
+    oneline: "속성이 바뀔 때 부드럽게 변화시키는 CSS 효과.",
+    easy: "버튼에 마우스 올리면 색이 갑자기가 아니라 살짝 천천히 바뀌게 하는 효과. 'transition: 0.3s'처럼 시간을 줘요.",
+    keys: ["transition: 속성 시간 가속곡선", "hover 등 상태 변화에 자주 사용", "복잡한 동작은 animation 사용"],
+    trap: "transition은 '한 번의 변화'. 반복·복잡 동작은 animation/@keyframes."
+  },
+  "form-input": {
+    title: "폼과 input 요소",
+    oneline: "사용자에게 정보를 입력받는 HTML 양식.",
+    easy: "회원가입 화면 같은 거예요. 한 줄 입력은 text, 비밀번호는 password, 동의 체크는 checkbox, 하나만 고르는 건 radio.",
+    keys: [
+      "input type: text, password, email, number, checkbox, radio, file",
+      "label의 for = input의 id로 연결",
+      "name으로 서버에 전송"
+    ],
+    trap: "라디오 버튼은 같은 name으로 묶어야 그룹이 돼요."
+  },
+  "list-tag": {
+    title: "목록 태그 (ul / ol / dl)",
+    oneline: "순서 없는 목록은 ul, 번호 매김은 ol, 용어·설명은 dl.",
+    easy: "장보기 목록은 순서 없으니 <ul>. 등수 발표는 순서 있으니 <ol>. 단어장처럼 단어-뜻 쌍은 <dl>(dt-dd).",
+    keys: ["<ul>: 불릿 목록", "<ol>: 번호 목록", "<dl>: 정의 목록(<dt>=용어, <dd>=설명)"],
+    trap: "순서가 중요하면 ol, 안 중요하면 ul."
+  },
+  "table-tag": {
+    title: "표 태그 (table / th / td)",
+    oneline: "표는 table, 머리는 th, 일반 셀은 td, 한 줄은 tr.",
+    easy: "엑셀의 표를 HTML로 옮긴 것. 첫 줄은 보통 헤더(th)로 굵게 표시되고, 나머지 칸은 td.",
+    keys: ["<table>: 표", "<tr>: 행(한 줄)", "<th>: 머리 셀(굵게)", "<td>: 일반 셀"],
+    trap: "th는 접근성에서 '머리'로 인식되니까 단순 굵게가 아니라 의미를 살려 써야 해요."
+  },
+  "anchor": {
+    title: "링크 (a 태그와 href)",
+    oneline: "<a href='주소'>로 다른 페이지로 이동.",
+    easy: "글자를 누르면 다른 페이지로 이동하게 하려면 <a> 태그로 감싸고 href에 주소를 적어요. target='_blank'를 넣으면 새 창.",
+    keys: ["<a href='url'>텍스트</a>", "target='_blank': 새 탭", "외부 링크엔 rel='noopener' 권장(보안)"],
+    trap: "href가 빠진 a 태그는 링크 역할을 못 해요."
+  },
+  "equality": {
+    title: "동등 연산자 (== vs ===)",
+    oneline: "===는 자료형까지 같아야 true.",
+    easy: "==는 '대충 비슷하면 같다'고 봐서 1 == '1'이 true예요. ===는 '자료형까지 똑같아야' true. 안전한 비교는 ===.",
+    keys: ["==: 값만 비교 (자료형 자동 변환)", "===: 자료형까지 비교 (엄격)", "권장: 항상 ===를 사용"],
+    trap: "0 == false가 true예요. === 쓰면 false. ===를 기본으로!"
+  },
+  "dom-query": {
+    title: "DOM 선택 (getElementById / querySelector)",
+    oneline: "id로 빠르게는 getElementById, CSS 선택자는 querySelector.",
+    easy: "교실에서 학생 부르는 법이에요. 출석번호로 부르면 getElementById(번호), '맨 앞 줄 안경 쓴 친구'처럼 부르면 querySelector(조건).",
+    keys: [
+      "getElementById('id')",
+      "querySelector('CSS 선택자') - 첫 번째 일치",
+      "querySelectorAll(...) - 전부"
+    ],
+    trap: "querySelectorAll은 배열이 아니라 NodeList예요. forEach는 되지만 map은 안 됨."
+  },
+  "json": {
+    title: "JSON",
+    oneline: "JavaScript 객체 모양으로 데이터를 주고받는 형식.",
+    easy: "서로 다른 컴퓨터끼리 약속한 메모지 형식이에요. {\"이름\":\"근호\",\"나이\":18} 처럼 적어요. 거의 모든 언어가 이걸 이해해요.",
+    keys: ["JSON = JavaScript Object Notation", "키와 값 모두 큰따옴표(\"\")로 감쌈", "객체 {}, 배열 [], 문자열, 숫자, 불리언, null"],
+    trap: "JSON의 키는 반드시 \"큰따옴표\". JS 객체와 다르게 작은따옴표 안 됨."
+  },
+  "array-method": {
+    title: "배열 속성과 메서드",
+    oneline: "배열 길이는 .length, 인덱스는 0부터 시작.",
+    easy: "줄 서 있는 사람 수를 셀 때 array.length. 첫 번째는 array[0], 두 번째는 array[1]이에요.",
+    keys: [".length로 길이", "0번부터 시작", "push/pop/shift/unshift/map/filter"],
+    trap: "마지막 인덱스는 length - 1이에요. length 자체는 마지막 인덱스 + 1."
+  },
+  "http-https": {
+    title: "HTTP와 HTTPS",
+    oneline: "HTTPS = HTTP + 자물쇠(암호화).",
+    easy: "HTTP는 엽서, HTTPS는 봉투에 넣은 편지예요. 중간에 누가 봐도 안에 뭐 적혔는지 알기 어려워요. 카드번호 입력 같은 곳은 무조건 HTTPS.",
+    keys: ["HTTP: 일반 통신, 평문", "HTTPS: SSL/TLS 암호화", "주소창 자물쇠 = HTTPS"],
+    trap: "HTTPS여도 사이트 자체가 가짜면 위험해요. 자물쇠 = 안전이 아니라 '암호화'."
+  },
+  "http-method": {
+    title: "HTTP 메서드 (GET vs POST)",
+    oneline: "GET은 조회, POST는 보내기.",
+    easy: "GET은 도서관에 책 정보 묻기, POST는 도서관에 새 책을 가져다 주기. GET은 주소창에 데이터 노출, POST는 안 보이게 본문에 담음.",
+    keys: ["GET: 조회, URL 쿼리로 전달", "POST: 본문(body)에 데이터 담아 전송", "PUT: 수정, DELETE: 삭제"],
+    trap: "비밀번호는 절대 GET으로 보내지 마세요. URL과 로그에 남아요."
+  },
+  "url": {
+    title: "URL과 DNS",
+    oneline: "URL은 자원 주소, DNS는 도메인 → IP 변환기.",
+    easy: "URL은 '서울시 강남구 ○○로 12'처럼 자원 주소예요. DNS는 '○○로 12를 GPS 좌표로 바꿔주는 안내소'예요.",
+    keys: [
+      "URL 구조: 프로토콜://도메인:포트/경로?쿼리#앵커",
+      "DNS: 도메인 ↔ IP 매핑"
+    ],
+    trap: "쿠키는 URL 구성요소가 아니라 브라우저 저장소."
+  },
+  "cookie-session": {
+    title: "쿠키와 세션",
+    oneline: "쿠키는 내 브라우저에, 세션은 서버에 저장.",
+    easy: "쿠키는 입장 손등 도장이에요(내가 가지고 있음). 세션은 보관함 번호표(서버가 내 정보를 들고 있음). 보안은 보통 세션이 더 안전.",
+    keys: ["쿠키: 클라이언트(브라우저) 저장", "세션: 서버 저장 + 세션ID 쿠키로 식별"],
+    trap: "쿠키에 비밀번호 같은 민감 정보는 평문 저장 금지."
+  },
+  "persona": {
+    title: "페르소나",
+    oneline: "제품을 쓰는 가상의 대표 사용자.",
+    easy: "'우리 앱을 누가 쓸까?'를 구체화하려고 가짜 사람을 한 명 만드는 거예요. 예: '18살 황근호, 자격증 준비, 출근길 지하철에서 5분씩 학습'. 이렇게 정해두면 기획·디자인이 일관돼져요.",
+    keys: ["가상 사용자 프로필", "이름·나이·목표·고민 등 구체적으로", "기획·디자인 결정의 기준"],
+    trap: "페르소나는 '평균 사용자'가 아니라 '대표 사용자' 한두 명을 콕 집어요."
+  },
+  "sitemap": {
+    title: "사이트맵",
+    oneline: "사이트의 페이지 구조를 트리로 정리한 도면.",
+    easy: "쇼핑몰 안내도 같아요. 메인 → 카테고리 → 상품 같은 계층을 한눈에 정리. 큰 사이트일수록 사이트맵이 길잡이가 돼요.",
+    keys: ["페이지 간 계층·관계 정리", "기획 초기에 작성"],
+    trap: "sitemap.xml은 검색엔진용 파일이고, 기획 사이트맵과는 다른 개념(이름만 같음)."
+  },
+  "accessibility": {
+    title: "웹 접근성",
+    oneline: "장애·환경과 상관없이 누구나 웹을 쓸 수 있게 하는 개념.",
+    easy: "휠체어 경사로처럼, 디지털에도 경사로가 필요해요. 시각장애인을 위한 alt 텍스트, 색맹을 위한 명도 대비, 키보드만으로도 조작 가능 등이 그 예.",
+    keys: [
+      "WCAG 지침 준수",
+      "이미지에 alt, 폼에 label",
+      "키보드 탐색 가능, 명도 대비 충분",
+      "skip link로 본문 바로가기"
+    ],
+    trap: "접근성은 '장애인 전용'이 아니라 '모두에게 더 쉬운 웹' 만드는 일이에요."
+  },
+  "responsive": {
+    title: "반응형 웹",
+    oneline: "하나의 코드로 모바일·태블릿·PC 모두에 적응.",
+    easy: "고무처럼 늘어나는 옷이에요. 화면이 작으면 작게, 크면 크게 자동으로 맞춰져요. 미디어 쿼리가 핵심 도구.",
+    keys: ["미디어 쿼리(@media)로 분기", "viewport meta 필수", "유연한 단위(%, rem, vw)"],
+    trap: "적응형(Adaptive)은 미리 정해둔 몇 가지 크기로 분기, 반응형은 연속적으로 변형."
+  },
+  "semantic-benefit": {
+    title: "시맨틱 마크업의 이점",
+    oneline: "의미 있는 태그를 쓰면 검색·접근성·유지보수가 좋아져요.",
+    easy: "<div> <div> <div>로만 짠 페이지는 누가 봐도 무슨 영역인지 몰라요. <header> <article> <footer>를 쓰면 사람도, 검색엔진도, 스크린리더도 한눈에 이해해요.",
+    keys: ["검색엔진 최적화(SEO)", "접근성 향상", "코드 가독성·유지보수"],
+    trap: "시맨틱 태그가 자동으로 디자인을 바꾸지는 않아요. 의미 전달용일 뿐."
   }
 };
