@@ -110,7 +110,10 @@
         <div class="section-title">기타</div>
         <div class="card" style="display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);flex-wrap:wrap;gap:8px">
           <div>전체 문제 수 <strong id="total-count" style="color:var(--text)">0</strong>문항</div>
-          <button class="chip danger hidden" id="btn-clear-wrong">오답노트 비우기</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="chip danger hidden" id="btn-clear-wrong">오답노트 비우기</button>
+            <button class="chip danger" id="btn-reset-exam">응시 데이터 초기화</button>
+          </div>
         </div>
       </section>
 

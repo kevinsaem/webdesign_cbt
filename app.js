@@ -820,7 +820,25 @@ function goHome() {
   navigate("home");
 }
 
+// 1회 한정 자동 초기화: 배포 시 응시 데이터 일괄 비우기
+// (사용자가 사이트를 새로 열 때 한 번만 실행됨)
+const ONE_TIME_RESET_FLAG = "wdc-reset-attempts-20260625";
+function applyOneTimeReset() {
+  if (localStorage.getItem(ONE_TIME_RESET_FLAG)) return;
+  localStorage.removeItem(STORE_ATTEMPTS);
+  localStorage.removeItem(STORE_EXAMS_STARTED);
+  localStorage.setItem(ONE_TIME_RESET_FLAG, "1");
+}
+
+// 응시 데이터 전체 초기화(수동)
+function resetExamData() {
+  localStorage.removeItem(STORE_ATTEMPTS);
+  localStorage.removeItem(STORE_EXAMS_STARTED);
+}
+
 function init() {
+  applyOneTimeReset();
+
   $("#mode-practice").addEventListener("click", startPractice);
   $("#mode-exam").addEventListener("click", () => {
     if (availableTickets() <= 0) { showLockedExamMessage(); return; }
@@ -838,6 +856,14 @@ function init() {
 
   $("#btn-clear-wrong").addEventListener("click", () => {
     if (confirm("오답노트를 모두 비울까요?")) { clearWrong(); renderHome(); }
+  });
+
+  $("#btn-reset-exam").addEventListener("click", () => {
+    if (confirm("근호의 응시 데이터(점수 기록 + 응시권 사용 횟수)를 모두 초기화할까요?\n\n연습 진행도와 오답노트는 그대로 유지됩니다.")) {
+      resetExamData();
+      renderHome();
+      alert("응시 데이터를 초기화했어요. 점수 그래프가 비워지고, 그동안 쌓은 연습 횟수만큼 시험권이 다시 발급됩니다.");
+    }
   });
 
   $("#btn-quit").addEventListener("click", () => {
